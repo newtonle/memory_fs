@@ -1,0 +1,26 @@
+Metadata-Version: 2.1
+Name: memory-fs
+Version: 0.0.1
+Summary: An in-memory file system
+Author: Newton Le
+Project-URL: Homepage, https://github.com/newtonle/memory_fs
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+
+# Memory File System
+An in-memory file system.
+
+## Usage
+
+```python
+fs = MemoryFileSystem()
+
+fs.mkdir('school')
+fs.cd('school')
+fs.pwd()
+
+/school
+
+```
