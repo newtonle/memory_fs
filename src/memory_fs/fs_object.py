@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Optional
 
 from memory_fs.exceptions import FileSystemError
@@ -15,21 +15,31 @@ class File(FileSystemObject):
         self.memory_space = memory_space
         self.address = memory_space.write_new(contents)
     
-    def get_contents(self):
+    def get_contents(self) -> str:
         return self.memory_space.get(self.address)
+    
+    def remove(self, recursive=False):
+        self.memory_space.remove(self.address)
+        self.parent.remove_child(self.name)
 
 
 class Directory(FileSystemObject):
     def __init__(self, name: str, parent: Optional["Directory"]):
-        self.contents: dict[str, FileSystemObject] = {'.': self, '..': parent}
+        self.contents: dict[str, FileSystemObject] = {}
         self.name = name
         self.parent = parent
     
-    def get_directory(self, path_list: list[str]):
+    def get_object(self, path_list: list[str]):
         if not path_list:
             return self
         try:
-            return self.contents[path_list[0]].get_directory(path_list[1:])
+            if path_list[0] == '.':
+                working_object = self
+            elif path_list[0] == '..':
+                working_object = self.parent
+            else:
+                working_object = self.contents[path_list[0]]
+            return working_object.get_object(path_list[1:])
         except KeyError:
             raise FileSystemError(f"No such directory {path_list[0]}.")
     
@@ -38,10 +48,32 @@ class Directory(FileSystemObject):
             return ''
         return f"{self.parent.get_path()}/{self.name}"
 
-    def get_contents(self) -> str:
-        return list(set(self.contents.keys()) - {'..', '.'})
+    def get_contents(self) -> list[str]:
+        return list(self.contents.keys())
     
     def make_directory(self, name):
         if name in self.contents:
             raise FileSystemError(f"Can't create directory {name}. It already exists.")
         self.contents[name] = Directory(name=name, parent=self)
+    
+    def remove(self, recursive=False):
+        if not recursive:
+            raise FileSystemError(f"Attemping to remove a directory. Set recursive=True to remove all contents of this directory.")
+        
+        for fs_obj in self.contents.values():
+            fs_obj.remove(recursive)
+        self.parent.remove_child(self.name)
+    
+    def remove_child(self, name: str):
+        """Should only used by the child to remove its own reference.
+
+        Args:
+            name: Name of the child object. Should correspond to the key in the self.contents dict.
+
+        Raises:
+            FileSystemError: If the name doesn't exist in the self.contents dict.
+        """
+        try:
+            del self.contents[name]
+        except KeyError:
+            raise FileSystemError(f"Attempting to remove content that doesn't exist: {name}")

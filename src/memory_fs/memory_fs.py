@@ -12,7 +12,7 @@ class MemoryFileSystem:
         if not path:
             return
         working_directory = self.root if path[0] == '/' else self._pwd
-        self._pwd = working_directory.get_directory(path.split('/'))
+        self._pwd = working_directory.get_object(path.split('/'))
 
     def pwd(self):
         pwd_ = self._pwd.get_path()
@@ -23,5 +23,9 @@ class MemoryFileSystem:
     
     def mkdir(self, name: str):
         name_list = name.split('/')
-        working_directory = self._pwd.get_directory(name_list[:-1])
+        working_directory = self._pwd.get_object(name_list[:-1])
         working_directory.make_directory(name_list[-1])
+    
+    def rm(self, path: str, recursive=False):
+        working_directory = self.root if path[0] == '/' else self._pwd
+        working_directory.get_object(path.split('/')).remove(recursive)

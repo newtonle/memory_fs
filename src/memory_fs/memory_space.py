@@ -11,11 +11,11 @@ class MemorySpace:
         except KeyError:
             raise MemorySystemError(f"Unable to get object at address {address}. It does not exist.")
     
-    def delete(self, address: int):
+    def remove(self, address: int):
         try:
             del self.space[address]
         except KeyError:
-            raise MemorySystemError(f"Unable to delete object at address {address}. It does not exist.")
+            raise MemorySystemError(f"Unable to remove object at address {address}. It does not exist.")
     
     def write(self, address: int, contents: str):
         self.space[address] = contents
