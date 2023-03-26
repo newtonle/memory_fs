@@ -11,8 +11,12 @@ class MemoryFileSystem:
     def cd(self, path: str):
         if not path:
             return
+        if path == '/':
+            self._pwd = self.root
+            return
+       
         working_directory = self.root if path[0] == '/' else self._pwd
-        self._pwd = working_directory.get_object(path.split('/'))
+        self._pwd = working_directory.get_object(path.strip('/').split('/'))
 
     def pwd(self):
         pwd_ = self._pwd.get_path()
@@ -28,4 +32,7 @@ class MemoryFileSystem:
     
     def rm(self, path: str, recursive=False):
         working_directory = self.root if path[0] == '/' else self._pwd
-        working_directory.get_object(path.split('/')).remove(recursive)
+        working_directory.get_object(path.strip('/').split('/')).remove(recursive)
+
+    def find(self, name: str):
+        return self._pwd.find(name)

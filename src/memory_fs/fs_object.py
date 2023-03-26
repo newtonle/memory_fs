@@ -4,23 +4,41 @@ from typing import Optional
 from memory_fs.exceptions import FileSystemError
 from memory_fs.memory_space import MemorySpace
 
+
 class FileSystemObject(ABC):
-    pass
+    @abstractmethod
+    def remove(self, recursive: bool=False):
+        pass
+
+    @abstractmethod
+    def get_contents(self):
+        pass
+
+    def get_path(self) -> str:
+        if not self.parent:
+            return ''
+        return f"{self.parent.get_path()}/{self.name}"
+    
+    def find(self, name: str) -> list[str]:
+        return []
 
 
 class File(FileSystemObject):
-    def __init__(self, name: str, parent: "Directory", contents: str, memory_space: "MemorySpace"):
+    def __init__(self, name: str, parent: "Directory", memory_space: "MemorySpace"):
         self.name = name
         self.parent = parent
         self.memory_space = memory_space
-        self.address = memory_space.write_new(contents)
+        self.address = memory_space.reserve()
     
     def get_contents(self) -> str:
         return self.memory_space.get(self.address)
     
-    def remove(self, recursive=False):
+    def remove(self, recursive: bool=False):
         self.memory_space.remove(self.address)
         self.parent.remove_child(self.name)
+    
+    def write(self, contents: str):
+        self.memory_space.write(self.address, contents)
 
 
 class Directory(FileSystemObject):
@@ -42,11 +60,6 @@ class Directory(FileSystemObject):
             return working_object.get_object(path_list[1:])
         except KeyError:
             raise FileSystemError(f"No such directory {path_list[0]}.")
-    
-    def get_path(self) -> str:
-        if not self.parent:
-            return ''
-        return f"{self.parent.get_path()}/{self.name}"
 
     def get_contents(self) -> list[str]:
         return list(self.contents.keys())
@@ -55,6 +68,15 @@ class Directory(FileSystemObject):
         if name in self.contents:
             raise FileSystemError(f"Can't create directory {name}. It already exists.")
         self.contents[name] = Directory(name=name, parent=self)
+
+    def find(self, name: str) -> list[str]:
+        found_paths = []
+        if name in self.contents:
+            found_paths.append(self.contents[name].get_path())
+        
+        for fs_obj in self.contents.values():
+            found_paths.extend(fs_obj.find(name))
+        return found_paths
     
     def remove(self, recursive=False):
         if not recursive:

@@ -20,8 +20,8 @@ class MemorySpace:
     def write(self, address: int, contents: str):
         self.space[address] = contents
 
-    def write_new(self, contents: str) -> int:
-        self.space[self.free_address] =  contents
+    def reserve(self) -> int:
+        self.space[self.free_address] =  None
         address = self.free_address
         self.free_address += 1
         return address
