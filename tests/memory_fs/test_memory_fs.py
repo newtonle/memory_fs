@@ -23,11 +23,10 @@ class TestMemoryFileSystem:
 
         fs.mkdir('class1')
         fs.mkdir('class2')
-        assert set(fs.ls()) == {'class1', 'class2'}
-
         fs.mkdir('class1/student1')
         fs.mkdir('class1/student2')
         fs.mkdir('class1/student3')
+        assert set(fs.ls()) == {'class1', 'class2'}
 
         fs.cd('class1')
         assert set(fs.ls()) == {'student1', 'student2', 'student3'}
@@ -99,3 +98,17 @@ class TestMemoryFileSystem:
         fs.mkdir('material')
         assert set(fs.find('material')) == {'/newton/le/material', '/material'}
 
+    def test_root_properties(self):
+        fs = MemoryFileSystem()
+        assert fs.pwd() == '/'
+
+        fs.cd('..')
+        assert fs.pwd() == '/'
+
+    def test_move_directory_succeeds(self):
+        fs = MemoryFileSystem()
+
+        fs.mkdir('destination')
+        fs.mkdir('newton')
+        fs.mv('newton', 'destination')
+        
