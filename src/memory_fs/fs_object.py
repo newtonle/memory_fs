@@ -6,6 +6,9 @@ from memory_fs.memory_space import MemorySpace
 
 
 class FileSystemObject(ABC):
+    name: str
+    parent: "Directory"
+
     @abstractmethod
     def remove(self, recursive: bool=False):
         pass
@@ -14,13 +17,24 @@ class FileSystemObject(ABC):
     def get_contents(self):
         pass
 
+    @abstractmethod
+    def find(self, name: str) -> list[str]:
+        pass
+
+    @abstractmethod
+    def get_object(self, path_list: list[str]) -> "FileSystemObject":
+        pass
+
+    def is_root(self) -> bool:
+        return self == self.parent
+
     def get_path(self) -> str:
-        if not self.parent:
+        if self.is_root():
             return ''
         return f"{self.parent.get_path()}/{self.name}"
     
-    def find(self, name: str) -> list[str]:
-        return []
+    def set_parent(self, parent: "Directory"):
+        self.parent = parent
 
 
 class File(FileSystemObject):
@@ -37,20 +51,27 @@ class File(FileSystemObject):
         self.memory_space.remove(self.address)
         self.parent.remove_child(self.name)
     
+    def get_object(self, path_list: list[str]) -> "FileSystemObject":
+        raise FileSystemError(f"Invalid path. {self.name} is a file, not a directory.")
+    
     def write(self, contents: str):
         self.memory_space.write(self.address, contents)
+    
+    def find(self, name: str) -> list[str]:
+        return []
 
 
 class Directory(FileSystemObject):
     def __init__(self, name: str, parent: Optional["Directory"]):
         self.contents: dict[str, FileSystemObject] = {}
         self.name = name
-        self.parent = parent
+        self.parent = parent or self  # root object's parent is itself
     
-    def get_object(self, path_list: list[str]):
+    def get_object(self, path_list: list[str]) -> FileSystemObject:
         if not path_list:
             return self
         try:
+            working_object: FileSystemObject
             if path_list[0] == '.':
                 working_object = self
             elif path_list[0] == '..':
@@ -80,10 +101,14 @@ class Directory(FileSystemObject):
     
     def remove(self, recursive=False):
         if not recursive:
-            raise FileSystemError(f"Attemping to remove a directory. Set recursive=True to remove all contents of this directory.")
+            raise FileSystemError(f"Attempting to remove a directory. Set recursive=True to remove all contents of this directory.")
+        
+        if self.is_root():
+            raise FileSystemError(f"Attempting to remove root directory.")
         
         for fs_obj in self.contents.values():
             fs_obj.remove(recursive)
+        
         self.parent.remove_child(self.name)
     
     def remove_child(self, name: str):
