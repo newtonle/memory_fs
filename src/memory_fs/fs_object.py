@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from memory_fs.directory import Directory
 
 class FileSystemObject(ABC):
+    """Abstract class for objects in a file system, e.g. files and directories.
+    """
     name: str
     parent: "Directory"
 
@@ -24,6 +26,14 @@ class FileSystemObject(ABC):
     def move(self, dst):
         pass
 
+    @abstractmethod
+    def walk(self, fn: Callable=lambda obj: print(obj.get_path())):
+        pass
+
+    @abstractmethod
+    def copy(self, dst):
+        pass
+
     def is_root(self) -> bool:
         return self == self.parent
 
@@ -34,3 +44,5 @@ class FileSystemObject(ABC):
     
     def set_parent(self, parent: "Directory"):
         self.parent = parent
+
+

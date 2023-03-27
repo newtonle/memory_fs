@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 from memory_fs.exceptions import FileSystemError
 from memory_fs.fs_object import FileSystemObject
@@ -9,6 +9,8 @@ if TYPE_CHECKING:
 
 
 class File(FileSystemObject):
+    """Represents a file in a file system.
+    """
     def __init__(self, name: str, parent: "Directory"):
         self.name = name
         self.parent = parent
@@ -36,7 +38,7 @@ class File(FileSystemObject):
         dst.remove()
         self.parent.add_child(self)
     
-    def walk(self, fn: callable):
+    def walk(self, fn: Callable=lambda obj: print(obj.get_path())):
         fn(self)
 
     def assert_directory(self):

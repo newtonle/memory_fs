@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Callable, cast, Optional
 
 from memory_fs.exceptions import FileSystemError
 from memory_fs.file import File
@@ -6,12 +6,14 @@ from memory_fs.fs_object import FileSystemObject
 
 
 class Directory(FileSystemObject):
+    """Represents a directory in a file system.
+    """
     def __init__(self, name: str, parent: Optional["Directory"]):
         self.children: dict[str, FileSystemObject] = {}
         self.name = name
         self.parent = parent or self  # root object's parent is itself
 
-    def get_contents(self) -> list[str]:
+    def get_children(self) -> list[str]:
         return list(self.children.keys())
     
     def make_directory(self, name):
@@ -48,7 +50,8 @@ class Directory(FileSystemObject):
                     child.name = new_name
                     dst.add_child(child)
                 elif isinstance(child, Directory) and isinstance(dst.children[name], Directory):
-                    child.move(dst.children[name])
+                    dst_directory = cast(Directory, dst.children[name])
+                    child.move(dst_directory)
                 else:
                     raise FileSystemError(f"Trying to merge file and directories of the same name: {name}")
             else:
@@ -64,7 +67,8 @@ class Directory(FileSystemObject):
                     child.copy(new_file)
                     dst.add_child(new_file)
                 elif isinstance(child, Directory) and isinstance(dst.children[name], Directory):
-                    child.copy(dst.children[name])
+                    dst_directory = cast(Directory, dst.children[name])
+                    child.copy(dst_directory)
                 else:
                     raise FileSystemError(f"Trying to merge file and directories of the same name: {name}")
             else:
@@ -79,17 +83,31 @@ class Directory(FileSystemObject):
             count += 1
         return new_name
 
-    def walk(self, fn: callable=lambda obj: print(obj.get_path())):
+    def walk(self, fn: Callable=lambda obj: print(obj.get_path())):
         fn(self)
         for child in self.children.values():
             child.walk(fn)
 
 
     def add_child(self, child: FileSystemObject):
+        """Add a child (file or directory) to this Directory
+
+        Args:
+            child: the file or directory
+        """
         self.children[child.name] = child
         child.set_parent(self)
 
     def get_or_create_child(self, name: str, create_file: bool=False) -> FileSystemObject:
+        """Get the child by the name or create it if it does not exit
+
+        Args:
+            name: name of the directory or file
+            create_file (optional): create a file instead of a directory. Defaults to False.
+
+        Returns:
+            the Directory or File object
+        """
         if name not in self.children:
             if create_file:
                 self.children[name] = File(name=name, parent=self)
