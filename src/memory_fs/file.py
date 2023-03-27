@@ -41,3 +41,6 @@ class File(FileSystemObject):
 
     def assert_directory(self):
         raise FileSystemError(f"{self.name} is a file, not a directory.")
+
+    def copy(self, dst: "File"):
+        dst.write(self.read())

@@ -54,6 +54,11 @@ class MemoryFileSystem:
         src_obj = self._get_object_at_path(src_path)
         dst_obj = self._get_object_at_path(path=dst_path, create=True, create_file=isinstance(src_obj, File))
         src_obj.move(dst_obj)
+    
+    def cp(self, src_path: str, dst_path: str):
+        src_obj = self._get_object_at_path(src_path)
+        dst_obj = self._get_object_at_path(path=dst_path, create=True, create_file=isinstance(src_obj, File))
+        src_obj.copy(dst_obj)
 
     def walk(self, path: str, fn: callable=lambda obj: print(obj.get_path())):
         fs_obj = self._get_object_at_path(path)

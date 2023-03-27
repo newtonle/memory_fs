@@ -53,8 +53,22 @@ class Directory(FileSystemObject):
                     raise FileSystemError(f"Trying to merge file and directories of the same name: {name}")
             else:
                 dst.add_child(child)
-            print(f"added {child.name} to {dst.name}")
         self.parent.remove_child(self)
+    
+    def copy(self, dst: "Directory"):
+        for name, child in list(self.children.items()):
+            if name in dst.children:
+                if isinstance(child, File) and isinstance(dst.children[name], File):
+                    new_name = self._resolve_file_name_collision(dst, name)
+                    new_file = File(name=new_name, parent=dst)
+                    child.copy(new_file)
+                    dst.add_child(new_file)
+                elif isinstance(child, Directory) and isinstance(dst.children[name], Directory):
+                    child.copy(dst.children[name])
+                else:
+                    raise FileSystemError(f"Trying to merge file and directories of the same name: {name}")
+            else:
+                dst.add_child(child)
     
     @staticmethod
     def _resolve_file_name_collision(dst_dir: "Directory", name: str) -> str:
@@ -92,7 +106,6 @@ class Directory(FileSystemObject):
         Raises:
             FileSystemError: If the name doesn't exist in the self.children dict.
         """
-        print(f"Removing {child.name} from {self.name}")
         try:
             del self.children[child.name]
         except KeyError:
