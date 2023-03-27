@@ -23,6 +23,9 @@ class File(FileSystemObject):
     def write(self, content: str):
         self.content.content = content
     
+    def read(self):
+        return self.content.content
+    
     def find(self, name: str) -> list[str]:
         return []
     

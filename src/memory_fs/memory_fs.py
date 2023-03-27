@@ -43,6 +43,10 @@ class MemoryFileSystem:
         file_obj = self._get_object_at_path(path)
         file_obj.write(content)
 
+    def read(self, path: str) -> str:
+        file_obj = self._get_object_at_path(path)
+        return file_obj.read()
+
     def find(self, name: str):
         return self._pwd.find(name)
     

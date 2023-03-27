@@ -40,25 +40,7 @@ class TestMemoryFileSystem:
         assert fs.ls() == []
     
     def test_example_commands_succeed(self):
-        """ make "school" directory
-            change directory to "school"
-            get working directory => "/school"
-            make "homework" directory
-            change directory to "homework"
-            make "math" directory
-            make "lunch" directory
-            make "history" directory
-            make "spanish" directory
-            delete "lunch" directory
-            get working directory contents => ["math", "history", "spanish"]
-            get working directory => "/school/homework"
-            change directory to parent
-            make "cheatsheet" directory
-            get working directory contents => ["homework", "cheatsheet"]
-            delete "cheatsheet" directory
-            change directory to parent
-            get working directory => "/"
-        """
+        """ As in the assignment example"""
         fs = MemoryFileSystem()
         fs.mkdir('school')
         fs.cd('school')
@@ -105,6 +87,14 @@ class TestMemoryFileSystem:
         fs.cd('..')
         assert fs.pwd() == '/'
 
+    def test_file_read_write_succeeds(self):
+        fs = MemoryFileSystem()
+        fs.mkdir('newton')
+        fs.touch('newton/test_file.txt')
+        fs.cd('newton')
+        fs.write('test_file.txt', 'foobar')
+        assert fs.read('test_file.txt') == 'foobar'
+
     def test_move_directory_succeeds(self):
         fs = MemoryFileSystem()
 
@@ -130,8 +120,10 @@ class TestMemoryFileSystem:
         fs.mkdir('newton/le')
         fs.mkdir('newton/tran')
         fs.touch('newton/le/test_file')
+        fs.write('newton/le/test_file', 'hello')
         fs.mkdir('destination/le')
         fs.touch('destination/le/test_file')
+        fs.write('destination/le/test_file', 'hello again')
         assert set(fs.ls()) == {'newton', 'destination'}
 
         fs.mv('newton', 'destination')
@@ -142,3 +134,5 @@ class TestMemoryFileSystem:
 
         fs.cd('le')
         assert set(fs.ls()) == {'test_file', 'test_file (1)'}
+        assert fs.read('test_file') == 'hello again'
+        assert fs.read('test_file (1)') == 'hello'
