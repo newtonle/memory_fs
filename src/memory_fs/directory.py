@@ -1,90 +1,100 @@
 from typing import Optional
 
 from memory_fs.exceptions import FileSystemError
+from memory_fs.file import File
 from memory_fs.fs_object import FileSystemObject
 
 
 class Directory(FileSystemObject):
     def __init__(self, name: str, parent: Optional["Directory"]):
-        self.contents: dict[str, FileSystemObject] = {}
+        self.children: dict[str, FileSystemObject] = {}
         self.name = name
         self.parent = parent or self  # root object's parent is itself
-    
-    def get_object(self, path_list: list[str]) -> FileSystemObject:
-        if not path_list:
-            return self
-        try:
-            working_object: FileSystemObject
-            if path_list[0] == '.':
-                working_object = self
-            elif path_list[0] == '..':
-                working_object = self.parent
-            else:
-                working_object = self.contents[path_list[0]]
-            return working_object.get_object(path_list[1:])
-        except KeyError:
-            raise FileSystemError(f"No such directory {path_list[0]}.")
 
     def get_contents(self) -> list[str]:
-        return list(self.contents.keys())
+        return list(self.children.keys())
     
     def make_directory(self, name):
-        if name in self.contents:
+        if name in self.children:
             raise FileSystemError(f"Can't create directory {name}. It already exists.")
-        self.contents[name] = Directory(name=name, parent=self)
+        self.children[name] = Directory(name=name, parent=self)
 
     def find(self, name: str) -> list[str]:
         found_paths = []
-        if name in self.contents:
-            found_paths.append(self.contents[name].get_path())
+        if name in self.children:
+            found_paths.append(self.children[name].get_path())
         
-        for fs_obj in self.contents.values():
+        for fs_obj in self.children.values():
             found_paths.extend(fs_obj.find(name))
         return found_paths
     
-    def remove(self, recursive=False):
+    def remove(self, recursive: bool=False):
         if not recursive:
-            raise FileSystemError(f"Attempting to remove a directory. Set recursive=True to remove all contents of this directory.")
+            raise FileSystemError(f"Attempting to remove a directory. Set recursive=True to remove this directory with all its contents.")
         
         if self.is_root():
             raise FileSystemError(f"Attempting to remove root directory.")
         
-        for fs_obj in self.contents.values():
+        for fs_obj in self.children.values():
             fs_obj.remove(recursive)
         
         self.parent.remove_child(self)
     
     def move(self, dst: "Directory"):
+        for name, child in list(self.children.items()):
+            if name in dst.children:
+                if isinstance(child, File) and isinstance(dst.children[name], File):
+                    new_name = self._resolve_file_name_collision(dst, name)
+                    child.name = new_name
+                    dst.add_child(child)
+                elif isinstance(child, Directory) and isinstance(dst.children[name], Directory):
+                    child.move(dst.children[name])
+                else:
+                    raise FileSystemError(f"Trying to merge file and directories of the same name: {name}")
+            else:
+                dst.add_child(child)
+            print(f"added {child.name} to {dst.name}")
         self.parent.remove_child(self)
-        for child in self.contents.values():
-            dst.add_child(child)
+    
+    @staticmethod
+    def _resolve_file_name_collision(dst_dir: "Directory", name: str) -> str:
+        count = 1
+        new_name = name
+        while new_name in dst_dir.children:
+            new_name = f"{name} ({count})"
+            count += 1
+        return new_name
+
+    def walk(self, fn: callable=lambda obj: print(obj.get_path())):
+        fn(self)
+        for child in self.children.values():
+            child.walk(fn)
+
 
     def add_child(self, child: FileSystemObject):
-        name = child.name
-        count = 1
-        while name in self.contents:
-            name = f"{child.name} ({count})"
-            count += 1
-        child.name = name
-        self.contents[name] = child
+        self.children[child.name] = child
         child.set_parent(self)
 
-    def create_or_get_child_directory(self, name: str):
-        if name not in self.contents:
-            self.contents[name] = Directory(name=name, parent=self)
-        return self.contents[name]
+    def get_or_create_child(self, name: str, create_file: bool=False) -> FileSystemObject:
+        if name not in self.children:
+            if create_file:
+                self.children[name] = File(name=name, parent=self)
+            else:
+                self.children[name] = Directory(name=name, parent=self)
+        return self.children[name]
     
     def remove_child(self, child: FileSystemObject):
         """Used by the child to remove its own reference.
 
         Args:
-            name: Name of the child object. Should correspond to the key in the self.contents dict.
+            name: Name of the child object. Should correspond to the key in the self.children dict.
 
         Raises:
-            FileSystemError: If the name doesn't exist in the self.contents dict.
+            FileSystemError: If the name doesn't exist in the self.children dict.
         """
+        print(f"Removing {child.name} from {self.name}")
         try:
-            del self.contents[child.name]
+            del self.children[child.name]
         except KeyError:
             raise FileSystemError(f"Attempting to remove content that doesn't exist: {child.name}")
     

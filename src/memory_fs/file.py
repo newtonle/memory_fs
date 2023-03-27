@@ -1,25 +1,27 @@
-from memory_fs.directory import Directory
+from typing import TYPE_CHECKING
+
 from memory_fs.exceptions import FileSystemError
-from memory_fs.file_contents import FileContents
 from memory_fs.fs_object import FileSystemObject
+from memory_fs.file_content import FileContent
+
+if TYPE_CHECKING:
+    from memory_fs.directory import Directory
+
 
 class File(FileSystemObject):
     def __init__(self, name: str, parent: "Directory"):
         self.name = name
         self.parent = parent
-        self.contents = FileContents(None)
+        self.content = FileContent(None)
     
-    def get_contents(self) -> str:
-        return self.contents.contents
+    def get_content(self) -> str:
+        return self.content.content
     
     def remove(self, recursive: bool=False):
         self.parent.remove_child(self)
     
-    def get_object(self, path_list: list[str]) -> "FileSystemObject":
-        raise FileSystemError(f"Invalid path. {self.name} is a file, not a directory.")
-    
-    def write(self, contents: str):
-        self.contents.contents = contents
+    def write(self, content: str):
+        self.content.content = content
     
     def find(self, name: str) -> list[str]:
         return []
@@ -31,5 +33,8 @@ class File(FileSystemObject):
         dst.remove()
         self.parent.add_child(self)
     
+    def walk(self, fn: callable):
+        fn(self)
+
     def assert_directory(self):
         raise FileSystemError(f"{self.name} is a file, not a directory.")

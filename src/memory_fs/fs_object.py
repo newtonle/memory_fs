@@ -13,15 +13,7 @@ class FileSystemObject(ABC):
         pass
 
     @abstractmethod
-    def get_contents(self):
-        pass
-
-    @abstractmethod
     def find(self, name: str) -> list[str]:
-        pass
-
-    @abstractmethod
-    def get_object(self, path_list: list[str]) -> "FileSystemObject":
         pass
 
     @abstractmethod

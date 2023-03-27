@@ -110,5 +110,35 @@ class TestMemoryFileSystem:
 
         fs.mkdir('destination')
         fs.mkdir('newton')
+        fs.mkdir('newton/le')
+        assert set(fs.ls()) == {'newton', 'destination'}
+
+        fs.mv('newton', 'destination/newton')
+        assert fs.ls() == ['destination']
+
+        fs.cd('destination')
+        assert fs.ls() == ['newton']
+
+        fs.cd('newton')
+        assert fs.ls() == ['le']
+
+    def test_move_directory_handles_name_collisions(self):
+        fs = MemoryFileSystem()
+
+        fs.mkdir('destination')
+        fs.mkdir('newton')
+        fs.mkdir('newton/le')
+        fs.mkdir('newton/tran')
+        fs.touch('newton/le/test_file')
+        fs.mkdir('destination/le')
+        fs.touch('destination/le/test_file')
+        assert set(fs.ls()) == {'newton', 'destination'}
+
         fs.mv('newton', 'destination')
-        
+        assert fs.ls() == ['destination']
+
+        fs.cd('destination')
+        assert set(fs.ls()) == {'le', 'tran'}
+
+        fs.cd('le')
+        assert set(fs.ls()) == {'test_file', 'test_file (1)'}
