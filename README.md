@@ -147,7 +147,21 @@ fs.walk('/')
     /company2/organization1
 
 
+absolute and relative paths with `.` and `..` are also supported:
+
 
 ```python
-
+fs.cd('/company2/organization1')
+fs.mkdir('/company3')
+fs.mkdir('../organization2')
+fs.mkdir('../../company3/organization0')
+fs.walk('/')
 ```
+
+    
+    /company2
+    /company2/organization1
+    /company2/organization2
+    /company3
+    /company3/organization0
+

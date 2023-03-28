@@ -47,11 +47,7 @@ class MemoryFileSystem:
         Args:
             path: relative or absolute path to create
         """
-        path_list = self._to_path_list(path)
-        fs_obj = self._traverse_path(self._pwd, path_list[:-1])
-        fs_obj.assert_directory()
-        working_directory = cast(Directory, fs_obj)
-        working_directory.make_directory(path_list[-1])
+        self._get_object_at_path(path=path, create=True, create_file=False)
     
     def rm(self, path: str, recursive: bool=False):
         """Remove a file or directory. Similar to UNIX's rm command.
