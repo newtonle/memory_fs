@@ -37,7 +37,7 @@ class Directory(FileSystemObject):
         if self.is_root():
             raise FileSystemError(f"Attempting to remove root directory.")
         
-        for fs_obj in self.children.values():
+        for fs_obj in list(self.children.values()):
             fs_obj.remove(recursive)
         
         self.parent.remove_child(self)
@@ -72,7 +72,12 @@ class Directory(FileSystemObject):
                 else:
                     raise FileSystemError(f"Trying to merge file and directories of the same name: {name}")
             else:
-                dst.add_child(child)
+                if isinstance(child, File):
+                    new_obj = File(name=name, parent=dst)
+                else:
+                    new_obj = Directory(name=name, parent=dst)
+                child.copy(new_obj)
+                dst.add_child(new_obj)
     
     @staticmethod
     def _resolve_file_name_collision(dst_dir: "Directory", name: str) -> str:
