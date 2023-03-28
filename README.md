@@ -1,15 +1,25 @@
 # Memory File System
-An in-memory file system.
 
 ## Usage
 
+Memory File System is an in-memory file system that supports many of the standard UNIX commands. Instantiating a `MemoryFileSystem` object creates an empty file system starting at root:
+
+
 ```python
+from memory_fs.memory_fs import MemoryFileSystem
+
 fs = MemoryFileSystem()
-
-fs.mkdir('school')
-fs.cd('school')
 fs.pwd()
+```
 
-/school
+
+
+
+    '/'
+
+
+
+
+```python
 
 ```
