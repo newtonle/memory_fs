@@ -166,8 +166,9 @@ fs.walk('/')
     /company3/organization0
 
 
-
-```python
 # TODO
 
-```
+* symlinks and hardlinks can be supported. Using `FileContent` object, hardlinks can use the same abstractions that point to the same contents
+* unit tests for all classes beyond the top-level class
+* docstrings for all classes beyond the top-level class
+* sphinx autodoc to produce API documentation
